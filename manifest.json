@@ -1,0 +1,34 @@
+{
+    "manifest_version": 3,
+    "name": "Bilingual Extension",
+    "description": "Add terms to your Bilingual vocabulary",
+    "version": "0.0.1",
+    "icons": {
+        "16": "logo/logo-16.png",
+        "48": "logo/logo-48.png",
+        "128": "logo/logo-128.png"
+    },
+    "options_page": "settings/settings.html",
+    "action": {
+        "default_title": "Bilingual Vocabulary",
+        "default_popup": "popup/popup.html",
+        "default_icon": "logo/logo-48.png"
+    },
+    "permissions": [
+        "contextMenus",
+        "storage"
+    ],
+    "externally_connectable": {
+        "matches": [
+            "http://localhost:3000/*",
+            "http://bilingual-frontend.herokuapp.com/*"
+        ]
+    },
+    "background": {
+        "service_worker": "service-worker.js"
+    },
+    "content_scripts": [{
+        "js": ["foreground.js"],
+        "matches": ["https://github.com/*"]
+    }]
+}
