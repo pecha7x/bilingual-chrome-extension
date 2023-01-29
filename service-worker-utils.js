@@ -48,7 +48,7 @@ const sendTermToVocabulary = (authToken, termText, vocabularyId) => {
 };
 
 const getUserVocabularies = (authToken) => {
-  return fetch('http://localhost:3001/api/v1/users/vocabularies', {
+  return fetch(baseApiUrl + '/users/vocabularies', {
     headers: new Headers({
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + authToken
