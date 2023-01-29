@@ -53,6 +53,6 @@ code {
     line-height: 1.5rem;
 }
 
-label {
+label, h3 {
     color: #4a4a4a;
 }

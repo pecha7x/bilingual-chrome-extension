@@ -21,14 +21,11 @@
     "externally_connectable": {
         "matches": [
             "http://localhost:3000/*",
-            "http://bilingual-frontend.herokuapp.com/*"
+            "https://bilingual.ai/*",
+            "https://*.bilingual.ai/*"
         ]
     },
     "background": {
         "service_worker": "service-worker.js"
-    },
-    "content_scripts": [{
-        "js": ["foreground.js"],
-        "matches": ["https://github.com/*"]
-    }]
+    }
 }

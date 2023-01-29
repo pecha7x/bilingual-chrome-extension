@@ -124,8 +124,7 @@ const initListeners = () => {
 chrome.runtime.onInstalled.addListener(() => {
   createContextMenu();
   chrome.management.getSelf((self) => {
-    console.log(self.installType)
-    baseApiUrl = self.installType === 'development' ? 'http://localhost:3001/api/v1' : 'http://bilingual-frontend.herokuapp.com/api/v1';
+    baseApiUrl = self.installType === 'development' ? 'http://localhost:3001/api/v1' : 'https://bilingual-backend.herokuapp.com/api/v1';
   });
 });
 

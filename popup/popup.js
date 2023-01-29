@@ -14,12 +14,20 @@ const initVocabularySelection = (currentUser) => {
     });
 
     document.querySelector('#vocabularies-select').addEventListener('change', function() {
-        console.log(currentUser.vocabularies)
         const vocabulary = currentUser.vocabularies.find(x => x.id === this.value);
-        console.log(vocabulary)
         const userData = { ...currentUser, currentVocabulary: vocabulary };
-        console.log(userData)
         chrome.storage.local.set({ currentUser: userData }, () => {});
+    });
+};
+
+const initLoginText = () => {
+    chrome.management.getSelf((self) => {
+        const loginUrl = self.installType === 'development' ? 'http://localhost:3000' : 'https://bilingual.ai';
+        const loginLink = '<h3>You should <a class="login-link" href="' + loginUrl + '" target="_blank">login</a> before</h3>';
+        document.querySelector('#vocabularies-select').innerHTML = loginLink;
+        document.querySelector('#vocabularies-select .login-link').addEventListener('click', function() {
+            window.open('', '_self', '').close();
+        });
     });
 };
 
@@ -27,8 +35,9 @@ window.addEventListener('load', function () {
     chrome.storage.local.get('currentUser', item => {
         const currentUser = item.currentUser;
         if(currentUser) {
-            console.log(currentUser)
             initVocabularySelection(currentUser);
+        } else {
+            initLoginText();
         }
     });
 });
