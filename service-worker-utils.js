@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 let baseApiUrl;
 
@@ -40,7 +40,6 @@ const sendTermToVocabulary = (authToken, termText, vocabularyId) => {
     }
     return response;
   }).then(response => {
-    console.log(response);
   }).catch(error => {
     console.log(error);
     adjective();
@@ -68,26 +67,46 @@ const getUserVocabularies = (authToken) => {
   });
 };
 
-// const emptyUserSchema = {
-//   id: null,
-//   authToken: null,
-//   currentVocabulary: {}, // name:, id:
-//   vocabularies: [], // { name:, id: }, ..
-// }
+const setCurrentUser = (data, sendResponse) => {
+  if (data.token) {
+    getUserVocabularies(data.token).then(vocabularies => {
+      const user = {
+        id: data.userId,
+        authToken: data.token,
+        vocabularies,
+        currentVocabulary: vocabularies[0]
+      };
 
-const initListeners = () => {
-  chrome.runtime.onMessageExternal.addListener((request, _sender, sendResponse) => {
-    if (request.token) {
-      getUserVocabularies(request.token).then(vocabularies => {
-        const user = {
-          id: request.userId,
-          authToken: request.token,
-          vocabularies,
-          currentVocabulary: vocabularies[0]
-        };
+      chrome.storage.local.set({
+        currentUser: user
+      }, () => {
+        sendResponse({
+          success: true,
+          message: 'Token has been received'
+        });
+      });
+    });
+  } else {
+    chrome.storage.local.remove('currentUser', () => { sendResponse({success: true, message: 'The user has been removed'}) });
+  }
+};
 
+const updateVocabularies = (sendResponse) => {  
+  chrome.storage.local.get('currentUser', item => {
+    const { currentUser } = item;
+
+    if (!currentUser) { return adjective() }
+    
+    if (!!currentUser && currentUser.authToken) {
+      getUserVocabularies(currentUser.authToken).then(vocabularies => {
+        let currentVocabulary = currentUser.currentVocabulary;
+        
+        if (!vocabularies.find(vocabulary => vocabulary.id === currentVocabulary.id)) {
+          currentVocabulary =  vocabularies[0];
+        }
+  
         chrome.storage.local.set({
-          currentUser: user
+          currentUser: {...currentUser, currentVocabulary, vocabularies}
         }, () => {
           sendResponse({
             success: true,
@@ -96,26 +115,40 @@ const initListeners = () => {
         });
       });
     } else {
-      chrome.storage.local.remove('currentUser');
+      sendResponse({
+        success: false,
+        message: 'The user unauthorized'
+      });
+    }
+  });
+};
+
+const initListeners = () => {
+  chrome.runtime.onMessageExternal.addListener((request, _sender, sendResponse) => {
+    const { messageType, data } = request;
+    if (messageType === 'setCurrentUser') {
+      setCurrentUser(data, sendResponse);
+    } else if (messageType === 'updateVocabularies') {
+      updateVocabularies(sendResponse);
+    } else {
+      sendResponse({
+        success: false,
+        message: 'Unknown messageType '
+      });
     }
   });
 
   chrome.contextMenus.onClicked.addListener(itemData => {
     chrome.storage.local.get('currentUser', item => {
       const { currentUser } = item;
-
+  
       if (!currentUser) {
         return adjective();
       }
-      const {
-        authToken,
-        currentVocabulary
-      } = currentUser;
-
-      if (!authToken || !currentVocabulary) {
-        return adjective();
-      }
-
+      
+      const { authToken, currentVocabulary } = currentUser;
+      if (!authToken || !currentVocabulary) { return adjective() }
+  
       sendTermToVocabulary(authToken, itemData.selectionText, currentVocabulary.id);
     });
   });
@@ -124,7 +157,7 @@ const initListeners = () => {
 chrome.runtime.onInstalled.addListener(() => {
   createContextMenu();
   chrome.management.getSelf((self) => {
-    baseApiUrl = self.installType === 'development' ? 'http://localhost:3001/api/v1' : 'https://bilingual-backend.herokuapp.com/api/v1';
+    baseApiUrl = self.installType === 'development' ? 'http://localhost:3001/api/v1' : 'https://bilingual.io/api/v1';
   });
 });
 
