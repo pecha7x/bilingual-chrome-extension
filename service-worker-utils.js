@@ -1,6 +1,9 @@
 'use strict';
 
-let baseApiUrl;
+const baseApiUrl = () => {
+  const isProdMode = 'update_url' in chrome.runtime.getManifest();
+  return (isProdMode ? 'https://bilingual.io/api/v1' : 'http://localhost:3001/api/v1');
+};
 
 const createContextMenu = () => {
   chrome.contextMenus.create({
@@ -24,7 +27,7 @@ const adjective = () => {
 };
 
 const sendTermToVocabulary = (authToken, termText, vocabularyId) => {
-  fetch(baseApiUrl + '/vocabulary-terms', {
+  fetch(baseApiUrl() + '/vocabulary-terms', {
     method: 'POST',
     headers: new Headers({
       'Content-Type': 'application/json',
@@ -39,7 +42,8 @@ const sendTermToVocabulary = (authToken, termText, vocabularyId) => {
       throw Error(response.message);
     }
     return response;
-  }).then(response => {
+  }).then(data => {
+    return data.term;
   }).catch(error => {
     console.log(error);
     adjective();
@@ -47,7 +51,7 @@ const sendTermToVocabulary = (authToken, termText, vocabularyId) => {
 };
 
 const getUserVocabularies = (authToken) => {
-  return fetch(baseApiUrl + '/users/vocabularies', {
+  return fetch(baseApiUrl() + '/users/vocabularies', {
     headers: new Headers({
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + authToken
@@ -70,6 +74,8 @@ const getUserVocabularies = (authToken) => {
 const setCurrentUser = (data, sendResponse) => {
   if (data.token) {
     getUserVocabularies(data.token).then(vocabularies => {
+      if (!vocabularies) { return adjective() };
+
       const user = {
         id: data.userId,
         authToken: data.token,
@@ -156,9 +162,6 @@ const initListeners = () => {
 
 chrome.runtime.onInstalled.addListener(() => {
   createContextMenu();
-  chrome.management.getSelf((self) => {
-    baseApiUrl = self.installType === 'development' ? 'http://localhost:3001/api/v1' : 'https://bilingual.io/api/v1';
-  });
 });
 
 initListeners();
